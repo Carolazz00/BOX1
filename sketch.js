@@ -1,35 +1,62 @@
 let shapes = [];
-let circleCount = 0;
-let squareCount = 0;
-let gravity = 0.5;
+let gravity = 2;
+let totalCounter;
+let buttonContainer;
 
-let circleBtn, squareBtn, resetBtn;
-let circleCounter, squareCounter, totalCounter;
+let svg_A = [], svg_B = [], svg_C = [], svg_D = [];
+let svg_E = [], svg_F = [], svg_G = [], svg_H = [];
+
+function preload() {
+  for (let i = 1; i <= 4; i++) {
+    let a = createImg(`./assets/A-0${i}.svg`); a.hide(); svg_A.push(a);
+    let b = createImg(`./assets/B-0${i}.svg`); b.hide(); svg_B.push(b);
+    let c = createImg(`./assets/C-0${i}.svg`); c.hide(); svg_C.push(c);
+    let d = createImg(`./assets/D-0${i}.svg`); d.hide(); svg_D.push(d);
+    let e = createImg(`./assets/E-0${i}.svg`); e.hide(); svg_E.push(e);
+    let f = createImg(`./assets/F-0${i}.svg`); f.hide(); svg_F.push(f);
+    let g = createImg(`./assets/G-0${i}.svg`); g.hide(); svg_G.push(g);
+    let h = createImg(`./assets/H-0${i}.svg`); h.hide(); svg_H.push(h);
+  }
+}
 
 function setup() {
-  createCanvas(400, 500);
+  createCanvas(windowWidth, windowHeight);
   frameRate(60);
+  imageMode(CENTER);
 
-  createP("点击按钮添加图形（真实碰撞 + 弹性堆叠）").style("color", "white");
+  createP("Click emotion buttons to add shapes").style("color", "white");
 
-  circleBtn = createButton("happy");
-  circleBtn.mousePressed(() => addShape('circle'));
+  buttonContainer = createDiv().style("display", "flex")
+                               .style("flex-wrap", "wrap")
+                               .style("gap", "10px")
+                               .style("margin-bottom", "10px");
 
-  squareBtn = createButton("angry");
-  squareBtn.mousePressed(() => addShape('square'));
+  createEmotionButton("happy", buttonContainer);
+  createEmotionButton("angry", buttonContainer);
+  createEmotionButton("afraid", buttonContainer);
+  createEmotionButton("anticipation", buttonContainer);
+  createEmotionButton("sad", buttonContainer);
+  createEmotionButton("surprise", buttonContainer);
+  createEmotionButton("trust", buttonContainer);
+  createEmotionButton("disgust", buttonContainer);
 
-  resetBtn = createButton("new");
-  resetBtn.mousePressed(resetCanvas);
+  createButton("reset").parent(buttonContainer).mousePressed(resetCanvas);
 
-  circleCounter = createP("圆形数量: 0").style("color", "white");
-  squareCounter = createP("正方形数量: 0").style("color", "white");
-  totalCounter = createP("总数量: 0").style("color", "white");
+  totalCounter = createP("Total shapes: 0").style("color", "white");
+}
 
-  textAlign(CENTER);
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function createEmotionButton(label, parentDiv) {
+  createButton(label)
+    .parent(parentDiv)
+    .mousePressed(() => addShape(label));
 }
 
 function draw() {
-  background(30, 40, 60);
+  background("WHITE");
   drawPlatform();
 
   for (let i = shapes.length - 1; i >= 0; i--) {
@@ -38,34 +65,17 @@ function draw() {
     if (!s.stopped) {
       s.vy += gravity;
       s.y += s.vy;
-      s.x += s.vx;
 
-      // 边界限制与反弹
-      if (s.x - s.size / 2 <= 0) {
-        s.x = s.size / 2;
-        s.vx *= -s.bounciness;
-      } else if (s.x + s.size / 2 >= width) {
-        s.x = width - s.size / 2;
-        s.vx *= -s.bounciness;
-      }
-
-      // 与底部碰撞
       if (s.y + s.size / 2 >= height - 10) {
         s.y = height - 10 - s.size / 2;
-        s.vy *= -s.bounciness;
-        s.vx *= 0.95;
-        if (abs(s.vy) < 0.5 && abs(s.vx) < 0.3) {
-          s.vy = 0;
-          s.vx = 0;
-          s.stopped = true;
-        }
+        s.vy = 0;
+        s.stopped = true;
       }
 
-      // 与其他图形的碰撞
       checkCollisions(i);
     }
 
-    drawShape(s);
+    image(s.svg, s.x, s.y, s.size, s.size);
   }
 }
 
@@ -75,36 +85,30 @@ function drawPlatform() {
   rect(0, height - 10, width, 10);
 }
 
-function drawShape(s) {
-  noStroke();
-  fill(s.color);
-  if (s.type === 'circle') {
-    ellipse(s.x, s.y, s.size);
-  } else {
-    rectMode(CENTER);
-    rect(s.x, s.y, s.size, s.size);
-  }
-}
-
 function addShape(type) {
-  let size = random(30, 50);
+  let size = random(60, 80);
+  let svg;
+
+  if (type === "happy") svg = svg_B[floor(random(0, 4))];
+  else if (type === "angry") svg = svg_A[floor(random(0, 4))];
+  else if (type === "afraid") svg = svg_C[floor(random(0, 4))];
+  else if (type === "anticipation") svg = svg_D[floor(random(0, 4))];
+  else if (type === "sad") svg = svg_E[floor(random(0, 4))];
+  else if (type === "surprise") svg = svg_F[floor(random(0, 4))];
+  else if (type === "trust") svg = svg_G[floor(random(0, 4))];
+  else if (type === "disgust") svg = svg_H[floor(random(0, 4))];
+
   let s = {
     x: random(size / 2, width - size / 2),
     y: -size / 2,
     size: size,
     type: type,
-    vx: random(-2, 2),
     vy: 0,
-    bounciness: 0.6,
     stopped: false,
-    color: type === 'circle'
-      ? [random(100, 200), random(100, 200), random(200, 255)]
-      : [random(200, 255), random(100, 180), random(50, 150)]
+    svg: svg
   };
-  shapes.push(s);
 
-  if (type === 'circle') circleCount++;
-  else squareCount++;
+  shapes.push(s);
   updateCounters();
 }
 
@@ -121,30 +125,24 @@ function checkCollisions(index) {
     let overlapY = (s.size + other.size) / 2 - abs(dy);
 
     if (overlapX > 0 && overlapY > 0 && dy > 0) {
-      // 发生重叠
-      // 纵向修复位置
       s.y -= overlapY;
-      s.vy *= -s.bounciness;
-      s.vx += dx * 0.05; // 水平推动
-
-      if (abs(s.vy) < 0.5 && abs(s.vx) < 0.3) {
-        s.vy = 0;
-        s.vx = 0;
-        s.stopped = true;
-      }
+      s.vy = 0;
+      s.stopped = true;
+      break;
     }
   }
 }
 
 function resetCanvas() {
   shapes = [];
-  circleCount = 0;
-  squareCount = 0;
   updateCounters();
 }
 
 function updateCounters() {
-  circleCounter.html("圆形数量:1 " + circleCount);
-  squareCounter.html("正方形数量: " + squareCount);
-  totalCounter.html("总数量: " + shapes.length);
+  totalCounter.html("Total shapes: " + shapes.length);
 }
+
+
+
+
+
